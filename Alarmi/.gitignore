@@ -45,3 +45,4 @@ app.*.map.json
 
 # HJH
 .env*
+ios/firebase_app_id_file.json

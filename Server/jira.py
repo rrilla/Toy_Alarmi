@@ -1,4 +1,5 @@
 import requests
+import json
 import time
 import pymysql
 import re
@@ -17,13 +18,17 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from fake_useragent import UserAgent
 
+jira_file_path = "./key/jira.json"
+with open(jira_file_path, 'r') as file:
+    jiraData = json.load(file)
+
 cookie = {
-    "ajs_anonymous_id" : "%2220b9b755-7279-4264-a76e-a565399e283b%22",
-    "atlassian.xsrf.token" : "6d78d611-d912-4f2b-8719-d180e682a3f4_ef662778bcc83847095acea8e2a41d2b7747f2d9_lin",
-    "atlassian.account.xsrf.token" : "e5795d3c-d7d3-40ed-aaee-911eeb3aad46",
-    "io" : "Q7uuy3Ao_FXmJP4GAZA8",
-    "JSESSIONID":"364274FE46BF4E613FB18057F0D4FFBA",
-    "tenant.session.token" : "eyJraWQiOiJzZXNzaW9uLXNlcnZpY2VcL3Byb2QtMTU5Mjg1ODM5NCIsImFsZyI6IlJTMjU2In0.eyJhc3NvY2lhdGlvbnMiOltdLCJzdWIiOiI2MjY3OGRmMDE4NWFjMjAwNjkzMDkwMmQiLCJlbWFpbERvbWFpbiI6ImZpeGVsc29mdC5jb20iLCJpbXBlcnNvbmF0aW9uIjpbXSwiY3JlYXRlZCI6MTY5NDEzMTI1MSwicmVmcmVzaFRpbWVvdXQiOjE2OTQ0ODQyNzQsInZlcmlmaWVkIjp0cnVlLCJpc3MiOiJzZXNzaW9uLXNlcnZpY2UiLCJzZXNzaW9uSWQiOiI4Njc0M2ZjOS0yYWY1LTQ5OGYtOGQ2OS1iNDM4Y2E3YzU1OGIiLCJzdGVwVXBzIjpbXSwiYXVkIjoiYXRsYXNzaWFuIiwibmJmIjoxNjk0NDgzNjc0LCJleHAiOjE2OTcwNzU2NzQsImlhdCI6MTY5NDQ4MzY3NCwiZW1haWwiOiJoamg5NEBmaXhlbHNvZnQuY29tIiwianRpIjoiODY3NDNmYzktMmFmNS00OThmLThkNjktYjQzOGNhN2M1NThiIn0.OKbiMnnTm482-sB1gaApo1usmTKbflJw7g803Ktd35SL110mFfMrAEFdCjwSFOvrpvKeQr2ppig2USfuk4wHMmy7s-G4lhvpIMi89npAAErYfv_MReGGm8dq9pzo1LJJjdn4ALbDKkG7q56F3-uuYjmd2FC0zp0Gih2JKg2cuiH9C6ZoanJ-l0RAWZcf7REdrqfX_NZnDQtLnnGlw9WeeuJR4Onm_1RMM_nkqZlPUp3mXrjlrXiyivhdrb5DQpfkQdOT7f89t1f_mhGOue9Z4v1ujJz-8dHpt3ZhsUZ03uUdUou7fMsNEzmlyZkhh2_anIe6-RIF-oewJrkit6XmUg"
+    "ajs_anonymous_id" : jiraData['ajs_anonymous_id'],
+    "atlassian.xsrf.token" : jiraData['atlassian_xsrf_token'],
+    "atlassian.account.xsrf.token" : jiraData['atlassian_account_xsrf_token'],
+    "io" : jiraData['io'],
+    "JSESSIONID":jiraData['JSESSIONID'],
+    "tenant.session.token" : jiraData['tenant_session_token'],
 }
 ua = UserAgent()
 headers = {'User-Agent' : ua.random}
@@ -88,7 +93,7 @@ def isNewIssue(crawlingData: List[Jira], site: Site):
             # title = "신규 이벤트"
             # message = "{0} 담당자 : {0}, 긴급도 : {1}\n {2}[{3}]".format(item.)
             
-            sendFCM(siteName, newIssue)
+            # sendFCM(siteName, newIssue)
             # for item in newIssue:
             #     print("신규이슈 - project : {0}, key : {1}, title : {2}".format(site.name, item.key, item.title))
 
