@@ -1,6 +1,7 @@
 import 'package:alarmi/common/fire_store.dart';
 import 'package:alarmi/common/theme.dart';
 import 'package:alarmi/model/state_user.dart';
+import 'package:alarmi/util/extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -62,10 +63,12 @@ class _LoginScreenState extends State<LoginScreen> {
         // 의도적인 로그인 취소로 보고 카카오계정으로 로그인 시도 없이 로그인 취소로 처리 (예: 뒤로 가기)
         if (error is PlatformException && error.code == 'CANCELED') {}
         // 카카오톡에 연결된 카카오계정이 없는 경우, 카카오계정으로 로그인
-        Fluttertoast.showToast(msg: "카톡 깔려있는데 로그인 안되있음.");
+        showMsg(context, "카톡 깔려있는데 로그인 안되있음.");
+        // Fluttertoast.showToast(msg: "카톡 깔려있는데 로그인 안되있음.");
       }
     } else {
-      Fluttertoast.showToast(msg: "서버 없다. 카톡 아닐시 카카오 로그인 안됨. 구글 써주세요.");
+      // Fluttertoast.showToast(msg: "서버 없다. 카톡 아닐시 카카오 로그인 안됨. 구글 써주세요.");
+      showMsg(context, "서버 없다. 카톡 아닐시 카카오 로그인 안됨. 구글 써주세요.");
     }
   }
 
@@ -135,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Container(
               width: 240,
               height: 60,
-              margin: const EdgeInsets.only(top: 10),
+              margin: const EdgeInsets.only(top: 15),
               // padding: const EdgeInsets.fromLTRB(50, 15, 50, 15),
               child: TextButton(
                 onPressed: () {

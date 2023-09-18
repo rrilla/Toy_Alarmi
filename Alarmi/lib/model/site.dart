@@ -1,11 +1,13 @@
+import 'package:alarmi/model/subscription.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Site {
-  int? id;
-  String? name;
-  String? url;
-  String? image;
+  final int? id;
+  final String? name;
+  final String? url;
+  final String? image;
   // final Timestamp dateCreated;
+  Subscription? subscription;
   final DocumentReference reference;
 
   Site.fromMap(Map<String, dynamic> map, {required this.reference})
@@ -19,7 +21,7 @@ class Site {
 
   @override
   String toString() {
-    return 'Site{id: $id, name: $name, url: $url, image: $image, reference: $reference}';
+    return 'Site{id: $id, name: $name, url: $url, image: $image, subcription: $subscription, reference: $reference}';
   }
 
 // String getDateCreated() {

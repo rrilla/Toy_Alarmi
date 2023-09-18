@@ -9,7 +9,6 @@ class User {
   final String? email;
   final SocialType? type;
   final Timestamp? created;
-  List<int>? subscriptions;
   final DocumentReference? reference;
 
   User({
@@ -19,7 +18,6 @@ class User {
     this.email,
     this.type,
     this.created,
-    this.subscriptions,
     this.reference,
   });
 
@@ -29,8 +27,7 @@ class User {
         image = map['image'],
         email = map['email'],
         type = map['type'] == "kakao" ? SocialType.kakao : SocialType.google,
-        created = map['created'],
-        subscriptions = map['subscriptions'];
+        created = map['created'];
 
   User.fromKakao(kakao_user.User user)
       : id = user.id.toString(),
@@ -39,7 +36,6 @@ class User {
         email = user.kakaoAccount?.email,
         type = SocialType.kakao,
         created = Timestamp.fromMicrosecondsSinceEpoch(DateTime.now().microsecondsSinceEpoch),
-        subscriptions = null,
         reference = null;
 
   User.fromGoogle(GoogleSignInAccount user)
@@ -49,7 +45,6 @@ class User {
         email = user.email,
         type = SocialType.google,
         created = Timestamp.fromMicrosecondsSinceEpoch(DateTime.now().microsecondsSinceEpoch),
-        subscriptions = null,
         reference = null;
   //https://play-lh.googleusercontent.com/38AGKCqmbjZ9OuWx4YjssAz3Y0DTWbiM5HB0ove1pNBq_o9mtWfGszjZNxZdwt_vgHo
 
@@ -64,28 +59,12 @@ class User {
       if (email != null) 'email': email,
       if (type != null) 'type': type?.name,
       'created': created ?? DateTime.now(),
-      'subscriptions': subscriptions
     };
-  }
-
-  Map<String, dynamic> toMapForSubscription() {
-   return {
-     'subscriptions': subscriptions
-   };
   }
 
   bool isLogin() {
     return id != null || nickname != null || image != null;
     // return true;
-  }
-
-  toggleSubscribe(bool flag, int siteId) {
-    if (subscriptions == null) {
-      if (flag) subscriptions = [siteId];
-    } else {
-      flag ? subscriptions!.add(siteId) : subscriptions!.remove(siteId);
-    }
-    print(subscriptions.toString());
   }
 
   // deleteSubscribe(int siteId) {
