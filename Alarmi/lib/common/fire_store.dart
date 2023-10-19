@@ -1,7 +1,9 @@
 enum DB {
   site('site'),
+  siteHome('site_home'),
   user('user'),
-  subscription('subscription');
+  subscription('subscription'),
+  subscriptionHome('subscription_home');
 
   const DB(this.name);
   final String name;

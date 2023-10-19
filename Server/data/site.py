@@ -7,3 +7,4 @@ class Site:
     id: int
     name: str
     url: str
+    image: str

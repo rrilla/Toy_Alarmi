@@ -42,6 +42,10 @@ dependencies:
   fluttertoast: ^8.2.2  # 토스트
   google_sign_in: ^6.1.5  # 구글 로그인
   flutter_dotenv: ^5.1.0
+  firebase_messaging: ^14.6.7
+  shared_preferences: ^2.2.1 # 내부 저장소 pref
+  flutter_local_notifications: ^16.1.0 # 알림
+  url_launcher: ^6.1.14 # url 실행 web
 
 dev_dependencies:
   flutter_test:

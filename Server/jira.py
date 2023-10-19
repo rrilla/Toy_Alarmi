@@ -2,23 +2,26 @@ import requests
 import json
 import time
 import pymysql
-import re
-import datetime
-import os
-import firebase_admin
+# import re
+# import datetime
+# import os
+# import firebase_admin
 from typing import List
 from data import Jira
 from data import Site
-from firebase_admin import credentials
-from firebase_admin import messaging
+from fcm import Fcm
+# from firebase_admin import credentials
+# from firebase_admin import messaging
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
+# from selenium import webdriver
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.common.keys import Keys
+# from selenium.webdriver.common.action_chains import ActionChains
 from fake_useragent import UserAgent
 
+fcm = Fcm()
 jira_file_path = "./key/jira.json"
+jira_file_path = "D:\hjh\workspace\Toy_Alarmi\Server\key\jira.json"
 with open(jira_file_path, 'r') as file:
     jiraData = json.load(file)
 
@@ -30,8 +33,7 @@ cookie = {
     "JSESSIONID":jiraData['JSESSIONID'],
     "tenant.session.token" : jiraData['tenant_session_token'],
 }
-ua = UserAgent()
-headers = {'User-Agent' : ua.random}
+
 
 conn = pymysql.connect(
     charset='utf8',
@@ -90,6 +92,8 @@ def isNewIssue(crawlingData: List[Jira], site: Site):
             newIssue.reverse()
             insertIssue(newIssue)
 
+            Fcm.sendFCM(fcm, site, newIssue)
+
             # title = "신규 이벤트"
             # message = "{0} 담당자 : {0}, 긴급도 : {1}\n {2}[{3}]".format(item.)
             
@@ -117,8 +121,11 @@ def insertIssue(crawlingData: List[Jira]):
 # 이슈 크롤링.
 def crawlingIssue(site: Site):
 
+    # ua = UserAgent()
+    # headers = {'User-Agent' : ua.random}
     print(site.url)
-    response = requests.get(site.url, headers=headers, cookies=cookie)
+    # response = requests.get(site.url, headers=headers, cookies=cookie)
+    response = requests.get(site.url, cookies=cookie)
     time.sleep(2)
 
     if response.status_code == 200:
@@ -148,53 +155,21 @@ def crawlingIssue(site: Site):
 
     return crawlingData
 
-def sendFCM(siteName, items):
-    # cred = credentials.Certificate("./firebase_key.json")
-    cred = credentials.Certificate("./key/benest.json")
-    firebase_admin.initialize_app(cred)
-
-    message = messaging.Message(
-        notification= messaging.Notification(
-            title = 'noti title',
-            body = 'noti body..',
-            image = 'https://imagescdn.gettyimagesbank.com/500/23/158/025/0/1463022977.jpg'
-        ),
-        data={
-            'score': '850',
-            'time': '2:45',
-        },
-        token=token,
-    )
-
-    response = messaging.send(message)
-    print('Successfully sent message:', response)
-
-def sendFCMs(tokens):
-    # cred = credentials.Certificate("./firebase_key.json")
-    cred = credentials.Certificate("./benest.json")
-    firebase_admin.initialize_app(cred)
-
-    message = messaging.Message(
-        notification= messaging.Notification(
-            title = 'noti title',
-            body = 'noti body..',
-            image = 'https://imagescdn.gettyimagesbank.com/500/23/158/025/0/1463022977.jpg'
-        ),
-        data={
-            'score': '850',
-            'time': '2:45',
-        },
-        tokens=tokens,
-    )
-
-    response = messaging.send_multicast(message)
-    print('{0} messages were sent successfully'.format(response.success_count))
 
 try:
-    cursor.execute("SELECT * FROM site;")
+    # cursor.execute("SELECT * FROM site")
     result: List[Site] = []
-    for res in cursor.fetchall():
-        result.append(Site(*res))
+    docs = fcm.db.collection("site").stream()
+
+    for doc in docs:
+        print(doc.to_dict())
+        val = doc.to_dict()
+        result.append(Site(id=val.get('id'), name=val.get('name'), url=val.get('url'), image=val.get('image')))
+
+    # cursor.execute("SELECT * FROM site WHERE id='1';")
+    # result: List[Site] = []
+    # for res in cursor.fetchall():
+    #     result.append(Site(*res))
 
     
     # dataJira()
@@ -203,9 +178,11 @@ try:
     #     dataJira.append(Jira(zz[0],zz[1],zz[2],zz[3],zz[4],zz[5],zz[6],zz[7]))
 
     print(result)
+    # print()
+    # dd = result[0]
+    # Fcm.sendFCM(Fcm(), dd)
     # init(result)
     trackingIssue(result)
-    # sendFCM("fAc-0A0NQIag6gltaZSFZ-:APA91bGl8cjhPJw1KqgoMlmGQXktPJmu1KFO5Zo0yDpamHRhhsfxurJ_BwgUxDsxjcuSKotWKVGTWuGr3xfto86-7Rg1earVft1miy1PVIdTYnfUNohl5GZR4qdbjPh1YaxRjxeBd8n_")
 except Exception as e:
     print("init() 실패", e)
 finally:

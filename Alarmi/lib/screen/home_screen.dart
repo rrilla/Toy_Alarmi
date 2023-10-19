@@ -1,5 +1,6 @@
 import 'package:alarmi/common/fire_store.dart';
 import 'package:alarmi/model/model_user.dart';
+import 'package:alarmi/screen/bottom_bar.dart';
 import 'package:alarmi/widget/item_site.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final Stream<QuerySnapshot> _siteStream =
   FirebaseFirestore.instance.collection(DB.site.name)
+      .orderBy(("id"))
+      .snapshots();
+
+  final Stream<QuerySnapshot> _siteHomeStream =
+  FirebaseFirestore.instance.collection(DB.siteHome.name)
       .orderBy(("id"))
       .snapshots();
 
@@ -46,7 +52,23 @@ class _HomeScreenState extends State<HomeScreen> {
     return TabBarView(
       physics: const NeverScrollableScrollPhysics(),
       children: [
-        ItemSite(sites: sites)
+        ItemSite(sites: sites, subscriptionType: DB.subscription),
+        StreamBuilder(
+          stream: _siteHomeStream,
+          builder: (context, snapshot2) {
+            if (snapshot2.hasError) {
+              Object error = snapshot2.error ?? Exception("Something went wrong");
+              return ErrorWidget(error);
+            }
+            if (snapshot2.connectionState == ConnectionState.waiting) {
+              return const LinearProgressIndicator(); //로딩 화면
+            }
+
+            List<Site> sitesHome = snapshot2.data!.docs.map((d) => Site.fromSnapshot(d)).toList();
+            return ItemSite(sites: sitesHome, subscriptionType: DB.subscriptionHome,);
+          }
+        )
+        //  widget 하나 추가.
       ],
     );
   }
@@ -54,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-        length: 1,
+        length: 2,
         child: Scaffold(
             appBar: AppBar(
                 title: const Text("알림 설정"),
@@ -66,6 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   )
                 ]
             ),
+            bottomNavigationBar: const Bottom(),
             body: _fetchData(context)));
   }
 

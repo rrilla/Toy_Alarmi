@@ -11,8 +11,9 @@ import '../model/state_user.dart';
 import '../model/subscription.dart';
 
 class ItemSite extends StatefulWidget {
-  const ItemSite({Key? key, required this.sites}) : super(key: key);
+  const ItemSite({Key? key, required this.sites, required this.subscriptionType}) : super(key: key);
   final List<Site> sites;
+  final DB subscriptionType;
 
   @override
   State<StatefulWidget> createState() => _ItemSiteState();
@@ -28,7 +29,7 @@ class _ItemSiteState extends State<ItemSite> {
     super.initState();
     _sites = widget.sites;
     _user = context.read<UserModel>().user;
-    _subscriptionRef = FirebaseFirestore.instance.collection(DB.subscription.name);
+    _subscriptionRef = FirebaseFirestore.instance.collection(widget.subscriptionType.name);
   }
 
   @override
@@ -51,14 +52,11 @@ class _ItemSiteState extends State<ItemSite> {
     } else {
       _subscriptionRef.doc(_sites[index].subscription?.reference.id).delete()
         .then((value) => {
-        setState(() {
-        _sites[index].subscription = null;
-        })
+          setState(() {
+            _sites[index].subscription = null;
+          })
       })
         .catchError((error) => showMsg(context, "알림 설정 실패. \n($error)"));
-      _subscriptionRef.where("userId", isEqualTo: _user.id).where("siteId", isEqualTo: _sites[index].id).get().then((value) => {
-        _subscriptionRef.doc(value.docs.first.reference.id).delete()
-      });
     }
   }
 
@@ -71,9 +69,15 @@ class _ItemSiteState extends State<ItemSite> {
 
         if (snapshot.data != null) {
           List<Subscription> subscriptions = snapshot.data!.docs.map((e) => Subscription.fromSnapshot(e)).toList();
-          _sites.forEach((site) => subscriptions.forEach((subscription) {
-            if (subscription.siteId == site.id) site.subscription = subscription;
-          }));
+          _sites.forEach((site) {
+            Subscription? sub;
+            subscriptions.forEach((subscription) {
+              if (subscription.siteId == site.id) {
+                sub = subscription;
+              }
+            });
+            site.subscription = sub;
+          });
         }
         return _buildBody();
       },
@@ -86,7 +90,7 @@ class _ItemSiteState extends State<ItemSite> {
       // 제스쳐 추가 위젯
       results.add(InkWell(
         onTap: () {
-          toggleSubscribe(_sites[i].subscription != null, i);
+          toggleSubscribe(_sites[i].subscription == null, i);
         },
         child: Container(
           padding: const EdgeInsets.fromLTRB(30, 15, 30, 15),

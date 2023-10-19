@@ -3,6 +3,7 @@ import 'package:alarmi/common/theme.dart';
 import 'package:alarmi/model/state_user.dart';
 import 'package:alarmi/util/extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:alarmi/model/model_user.dart' as my_user;
@@ -10,6 +11,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:provider/provider.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -22,6 +24,38 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool isLogin = false;
   final CollectionReference userRef = FirebaseFirestore.instance.collection(DB.user.name);
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    getUser();
+  }
+
+  getUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    print("hjh");
+    print("hjh ${prefs.getString(my_user.User.prefId)}");
+    print("hjh ${prefs.getString(my_user.User.prefEmail)}");
+
+    my_user.User user = my_user.User(
+        id: prefs.getString(my_user.User.prefId),
+        email: prefs.getString(my_user.User.prefEmail),
+        nickname: prefs.getString(my_user.User.prefNickname),
+        image: prefs.getString(my_user.User.prefImage),
+        type: prefs.getString(my_user.User.prefType) == my_user.SocialType.kakao.name ? my_user.SocialType.kakao : my_user.SocialType.google
+    );
+
+    _loginSuccess(user);
+  }
+
+  // requestPermission() {
+  //   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  //   FlutterLocalNotificationsPlugin();
+  //   flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+  //       AndroidFlutterLocalNotificationsPlugin>().requestPermission();
+  // }
 
   _checkTokenFromKakao() async {
     try {
@@ -88,21 +122,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
   _loginSuccess(my_user.User user) async {
     if (user.id != null) {
+      String? token = await FirebaseMessaging.instance.getToken();
+      user.token = token;
       userRef
           .where('id', isEqualTo: user.id)
-          .get().then((value) => {
+          .get().then((value) async => {
             if (value.docs.isEmpty) {
-              userRef.add(user.toMap()).then((value) {
-              print("hjh add id : ${value.id}");
-              context.read<UserModel>().user = user;
+              userRef.add(user.toMap()).then((value) async {
+                user.reference = value;
+                print("hjh add id : ${value.id}");
+
+                final SharedPreferences pref = await SharedPreferences.getInstance();
+                pref.setString("id", user.id??"");
+                user.saveUser();
+                context.read<UserModel>().user = user;
               }).catchError((error) => print("Failed to add user: $error"))
             } else {
+              userRef.doc(value.docs.first.reference.id).update(user.toMapForToken()),
+              await my_user.User.fromSnapshot(value.docs.first).saveUser(),
               context.read<UserModel>().user = my_user.User.fromSnapshot(value.docs.first)
             }
-    }).catchError((error) => print("Failed to find user: $error"));
+      }).catchError((error) => print("Failed to find user: $error"));
 
     } else {
-      Fluttertoast.showToast(msg: "social id 가 없음. \n 다시 해보셈.");
+      // Fluttertoast.showToast(msg: "social id 가 없음. \n 다시 해보셈.");
+      print("social id 가 없거나 자동로그인 실패.");
     }
   }
 
