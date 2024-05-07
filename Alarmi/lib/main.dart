@@ -19,12 +19,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
-  // MyNotification myNoti = MyNotification();
-  // await myNoti.setupFlutterNotifications();
-  // showFlutterNotification(message, myNoti);
+  // FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+  print("in background");
 
-  print("HIHIHIHIHIH");
+  // showFlutterNotification(message, myNoti);
   //showFlutterNotification(message);  // 로컬노티
 }
 
@@ -44,21 +42,26 @@ Future<void> _handleMessage(RemoteMessage message) async {
   }
 }
 
-void showFlutterNotification(RemoteMessage message, MyNotification myNoti) {
+void showFlutterNotification(RemoteMessage message) {
+  AndroidNotificationChannel channel = const AndroidNotificationChannel(
+    'high_importance_channel', // id
+    'High Importance Notifications', // title
+    description: 'This channel is used for important notifications.', // description
+    importance: Importance.high,
+  );
   RemoteNotification? notification = message.notification;
   AndroidNotification? android = message.notification?.android;
 
-
   if (notification != null && android != null && !kIsWeb) { // 웹이 아니면서 안드로이드이고, 알림이 있는경우
-    myNoti.flutterLocalNotificationsPlugin.show(
+    FlutterLocalNotificationsPlugin().show(
       notification.hashCode,
       notification.title,
-      message.data['url'],
+      notification.body,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          myNoti.channel.id,
-          myNoti.channel.name,
-          channelDescription: myNoti.channel.description,
+          channel.id,
+          channel.name,
+          channelDescription: channel.description,
           // TODO add a proper drawable resource to android, for now using
           //      one that already exists in example app.
           icon: 'launch_background',
@@ -81,7 +84,10 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await MyNotification().setupFlutterNotifications();
+  MyNotification().setupFlutterNotifications();
+
+  NotificationAppLaunchDetails? dd = await FlutterLocalNotificationsPlugin().getNotificationAppLaunchDetails();
+  print("noti data ${dd?.notificationResponse?.payload ?? "zzz"}");
 
   runApp(ChangeNotifierProvider(
     create: (context) => UserModel(),
@@ -97,13 +103,28 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+
+  Future<void> setupInteractedMessage() async {
+    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+
+    if (initialMessage != null) {
+      _handleMessage(initialMessage);
+    }
+
+    FlutterLocalNotificationsPlugin().initialize(InitializationSettings(),onDidReceiveNotificationResponse: (details) => {
+      print("ㅎㅎㅎ ${details.payload}")
+    },);
+
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    FirebaseMessaging.onMessage.listen(showFlutterNotification);
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+  }
+
   @override
   void initState() {
     super.initState();
 
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    FirebaseMessaging.onMessageOpenedApp.listen((event) {_handleMessage(event);});
-    FirebaseMessaging.onMessage.listen((event) {print("in foreground");});
+    setupInteractedMessage();
   }
 
   @override

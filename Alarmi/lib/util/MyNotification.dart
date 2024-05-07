@@ -32,6 +32,8 @@ class MyNotification {
     );
     flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
     await flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(channel);
+
+
     // iOS foreground notification 권한
     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
       alert: true,
@@ -39,7 +41,7 @@ class MyNotification {
       sound: true,
     );
     // IOS background 권한 체킹 , 요청
-    await FirebaseMessaging.instance.requestPermission(
+    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -48,6 +50,16 @@ class MyNotification {
       provisional: false,
       sound: true,
     );
+
+    print('User granted permission: ${settings.authorizationStatus}');
+    /**
+     * authorized: 사용자가 권한을 부여했습니다.
+     * denied: 용자가 사용 권한을 거부했습니다.
+     * notDetermined: 사용자가 권한을 부여할지 여부를 아직 선택하지 않았습니다.
+     * provisional: 사용자가 임시 권한을 부여했습니다
+     * */
+
+
     // 토큰 요청
     getToken();
     // 셋팅flag 설정

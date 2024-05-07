@@ -93,6 +93,16 @@ class User {
     }
   }
 
+  clearUser() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    prefs.remove(prefId);
+    prefs.remove(prefType);
+    prefs.remove(prefEmail);
+    prefs.remove(prefNickname);
+    prefs.remove(prefImage);
+  }
+
   Map<String, dynamic> toMapForToken() {
     return {
       'token': token
